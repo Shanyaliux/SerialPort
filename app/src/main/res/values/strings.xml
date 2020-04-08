@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">SerialPort</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="connect">Connect</string>
+    <string name="check_update">CheckUpdate</string>
+    <string name="paired_device">Paired device</string>
+    <string name="unpaired_device">Unpaired device</string>
+    <string name="search_button">Scan for new devices</string>
+    <string name="send_hint">Please enter……</string>
+    <string name="send_button">Send</string>
+    <string name="switch_text">Edit case</string>
+</resources>
