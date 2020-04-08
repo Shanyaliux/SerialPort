@@ -1,6 +1,6 @@
 package com.shanya.serialport.update
 
-data class versionInfo (
+data class VersionInfo (
     val versionCode:Int,
     val versionName:String,
     val fileName:String,
