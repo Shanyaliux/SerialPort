@@ -2,10 +2,12 @@ package com.shanya.serialport
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -20,6 +22,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
+import com.shanya.serialport.update.DownloadUtil
+import com.shanya.serialport.update.VersionInfo
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
 import java.util.*
@@ -130,7 +134,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class MyHandler(private val context: Context,private val infoViewModel: InfoViewModel): Handler(){
+class MyHandler(private val context: Context, private val infoViewModel: InfoViewModel): Handler(){
     override fun handleMessage(msg: Message) {
         super.handleMessage(msg)
         when(msg.what){
@@ -143,6 +147,7 @@ class MyHandler(private val context: Context,private val infoViewModel: InfoView
             NOT_CONNECT -> {
                 Toast.makeText(context,"未连接蓝牙",Toast.LENGTH_SHORT).show()
             }
+
         }
     }
 }

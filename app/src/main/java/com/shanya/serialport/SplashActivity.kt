@@ -8,26 +8,35 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.google.gson.Gson
 import com.shanya.serialport.update.DownloadUtil
 import com.shanya.serialport.update.Update
 import com.shanya.serialport.update.VersionInfo
+import com.shanya.serialport.update.VolleySingleton
 import java.util.*
 
-const val UPDATE_CODE = 1
+const val UPDATE_CODE_YES = 0x986
+const val UPDATE_CODE_NO = 0x985
 class SplashActivity : AppCompatActivity() {
+
+    private lateinit var infoViewModel: InfoViewModel
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
-
-
-
-
+        infoViewModel = ViewModelProvider(this).get(InfoViewModel::class.java)
         val permissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.BLUETOOTH,
@@ -45,38 +54,52 @@ class SplashActivity : AppCompatActivity() {
         }else{
             Toast.makeText(this,"已获取所需权限",Toast.LENGTH_SHORT).show()
 
-            Update.checkUpdate(this)
-//            val handler = Handler()
-//            handler.postDelayed(Runnable {
-//                val intent = Intent(this@SplashActivity, MainActivity::class.java)
-//                startActivity(intent)
-//                finish()
-//            }, 1000)
-            val handler = object : Handler() {
-                override fun handleMessage(msg: Message) {
-                    super.handleMessage(msg)
-                    when(msg.what){
-                        UPDATE_CODE -> {
-                            val versionInfo: VersionInfo = msg.obj as VersionInfo
-                            val builder: AlertDialog.Builder =
-                                AlertDialog.Builder(this@SplashActivity)
-                                    .setTitle("发现新版本")
-                                    .setMessage(versionInfo.updateContent)
-                                    .setPositiveButton("立即下载",
-                                        DialogInterface.OnClickListener { dialog, which ->
-                                            val downloadUtil = DownloadUtil(
-                                                this@SplashActivity,
-                                                "https://github.com/Shanyaliux/AppUpdate/releases/download/test1/app-debug.apk",
-                                                versionInfo.fileName
-                                            )
-                                        })
-                                    .setNegativeButton("以后再说",
-                                        DialogInterface.OnClickListener { dialog, which -> })
-                            builder.show()
-                        }
+            val stringRequest = StringRequest(
+                Request.Method.GET,
+                "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json",
+                Response.Listener {
+                    val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
+                    val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
+                    val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
+                    if (BuildConfig.VERSION_CODE < versionCode) {
+                        val builder: AlertDialog.Builder =
+                            AlertDialog.Builder(this)
+                                .setTitle("发现新版本")
+                                .setMessage(updateContent)
+                                .setPositiveButton("立即下载",
+                                    DialogInterface.OnClickListener { dialog, which ->
+                                        val downloadUtil = DownloadUtil(
+                                            this,
+                                            "https://github.com/Shanyaliux/AppUpdate/releases/download/test1/app-debug.apk",
+                                            fileName
+                                        )
+                                        val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                        startActivity(intent)
+                                        finish()
+                                    })
+                                .setNegativeButton("以后再说",
+                                    DialogInterface.OnClickListener { dialog, which ->
+                                        val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                        startActivity(intent)
+                                        finish()
+                                    })
+                        builder.show()
+
+                    }else{
+                        val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                        startActivity(intent)
+                        finish()
                     }
-                }
-            }
+                },
+                Response.ErrorListener {
+                    val handler = Handler()
+                    val msg = Message.obtain()
+                    msg.what = UPDATE_CODE_NO
+                    handler.sendMessage(msg)
+                    Log.d("VolleyErrorListener",it.toString())
+                })
+            VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+
         }
 
     }
@@ -93,13 +116,53 @@ class SplashActivity : AppCompatActivity() {
                     if (element != PackageManager.PERMISSION_GRANTED){
                         Toast.makeText(this,"有权限未获取，可能会影响使用", Toast.LENGTH_SHORT).show()
                     }else{
-                        val handler = Handler()
-//                        handler.postDelayed(Runnable {
-//                            val intent = Intent(this@SplashActivity, MainActivity::class.java)
-//                            startActivity(intent)
-//                            finish()
-//                        }, 1000)
-                        Update.checkUpdate(this)
+                        val stringRequest = StringRequest(
+                            Request.Method.GET,
+                            "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json",
+                            Response.Listener {
+                                val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
+                                val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
+                                val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
+                                if (BuildConfig.VERSION_CODE < versionCode) {
+                                    val builder: AlertDialog.Builder =
+                                        AlertDialog.Builder(this)
+                                            .setTitle("发现新版本")
+                                            .setMessage(updateContent)
+                                            .setPositiveButton("立即下载",
+                                                DialogInterface.OnClickListener { dialog, which ->
+                                                    val downloadUtil = DownloadUtil(
+                                                        this,
+                                                        "https://github.com/Shanyaliux/AppUpdate/releases/download/test1/app-debug.apk",
+                                                        fileName
+                                                    )
+                                                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                                    startActivity(intent)
+                                                    finish()
+                                                })
+                                            .setNegativeButton("以后再说",
+                                                DialogInterface.OnClickListener { dialog, which ->
+                                                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                                    startActivity(intent)
+                                                    finish()
+                                                })
+                                    builder.show()
+
+                                }else{
+                                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
+                                }
+                            },
+                            Response.ErrorListener {
+                                val handler = Handler()
+                                val msg = Message.obtain()
+                                msg.what = UPDATE_CODE_NO
+                                handler.sendMessage(msg)
+                                Log.d("VolleyErrorListener",it.toString())
+                            })
+                        VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+//
+
                     }
                 }
             }
