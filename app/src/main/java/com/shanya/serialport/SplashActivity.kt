@@ -26,6 +26,8 @@ import java.util.*
 
 const val UPDATE_CODE_YES = 0x986
 const val UPDATE_CODE_NO = 0x985
+const val JSON_URL = "https://shanya-01.coding.net/p/SerialPort/d/Android/git/raw/master/update.json"
+const val APK_URL = "https://shanya-01.coding.net/p/SerialPort/d/Android/git/raw/master/app-release.apk"
 class SplashActivity : AppCompatActivity() {
 
     private lateinit var infoViewModel: InfoViewModel
@@ -56,7 +58,7 @@ class SplashActivity : AppCompatActivity() {
 
             val stringRequest = StringRequest(
                 Request.Method.GET,
-                "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json",
+                JSON_URL,
                 Response.Listener {
                     val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
                     val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
@@ -70,7 +72,7 @@ class SplashActivity : AppCompatActivity() {
                                     DialogInterface.OnClickListener { dialog, which ->
                                         val downloadUtil = DownloadUtil(
                                             this,
-                                            "https://github.com/Shanyaliux/AppUpdate/releases/download/test1/app-debug.apk",
+                                            APK_URL,
                                             fileName
                                         )
                                         val intent = Intent(this@SplashActivity, MainActivity::class.java)
@@ -118,7 +120,7 @@ class SplashActivity : AppCompatActivity() {
                     }else{
                         val stringRequest = StringRequest(
                             Request.Method.GET,
-                            "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json",
+                            JSON_URL,
                             Response.Listener {
                                 val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
                                 val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
@@ -132,7 +134,7 @@ class SplashActivity : AppCompatActivity() {
                                                 DialogInterface.OnClickListener { dialog, which ->
                                                     val downloadUtil = DownloadUtil(
                                                         this,
-                                                        "https://github.com/Shanyaliux/AppUpdate/releases/download/test1/app-debug.apk",
+                                                        APK_URL,
                                                         fileName
                                                     )
                                                     val intent = Intent(this@SplashActivity, MainActivity::class.java)
