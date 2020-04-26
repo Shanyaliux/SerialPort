@@ -26,8 +26,8 @@ import java.util.*
 
 const val UPDATE_CODE_YES = 0x986
 const val UPDATE_CODE_NO = 0x985
-const val JSON_URL = "https://shanya-01.coding.net/p/SerialPort/d/Android/git/raw/master/update.json"
-const val APK_URL = "https://shanya-01.coding.net/p/SerialPort/d/Android/git/raw/master/app-release.apk"
+const val JSON_URL = "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json"
+const val APK_URL = "https://github.com/Shanyaliux/SerialPort/releases/download/V1.1/app-release.apk"
 class SplashActivity : AppCompatActivity() {
 
     private lateinit var infoViewModel: InfoViewModel
