@@ -70,6 +70,13 @@ class SplashActivity : AppCompatActivity() {
         }else{//全部权限已申请
             Toast.makeText(this,"已获取所需权限",Toast.LENGTH_SHORT).show()
 
+            val animationCheckText = AnimationUtils.loadAnimation(this,R.anim.slide_from_bottom)
+            animationCheckText.duration = 500
+            textViewCheckUpdate.animation = animationCheckText
+            textViewCheckUpdate.visibility = View.VISIBLE
+            progressBarDownload.isIndeterminate = true
+            progressBarDownload.visibility = View.VISIBLE
+
             val stringRequest = StringRequest(
                 Request.Method.GET,
                 JSON_URL,
