@@ -1,38 +1,36 @@
 package com.shanya.serialport.startactivity
 
 import android.Manifest
-import android.animation.AnimatorInflater
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
-import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.view.animation.Animation
-import android.view.animation.AnimationSet
 import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.google.gson.Gson
+import com.shanya.downloadutil.DownloadUtil
 import com.shanya.serialport.*
-import com.shanya.serialport.update.DownloadUtil
 import com.shanya.serialport.update.VersionInfo
 import com.shanya.serialport.update.VolleySingleton
 import kotlinx.android.synthetic.main.activity_splash.*
+import java.io.File
+import java.lang.Exception
 import java.util.*
+import kotlin.math.log
 
-const val UPDATE_CODE_YES = 0x986
-const val UPDATE_CODE_NO = 0x985
+const val DOWNLOAD_SUCCESS = 0x654
+const val DOWNLOAD_FAIL = 0x655
+const val DOWNLOAD_PROGRESS = 0x656
 const val JSON_URL = "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json"
 const val APK_URL = "https://github.com/Shanyaliux/SerialPort/releases/download/V1.1/app-release.apk"
 class SplashActivity : AppCompatActivity() {
@@ -42,9 +40,9 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         val animationTag = AnimationUtils.loadAnimation(this,R.anim.slide_from_left)
-        animationTag.duration = 500
+        animationTag.duration = 600
         val animationLogo = AnimationUtils.loadAnimation(this,R.anim.slide_from_right)
-        animationLogo.duration = 500
+        animationLogo.duration = 600
         textViewMainTag.animation = animationTag
         textViewMainTag.visibility = View.VISIBLE
         imageViewDxLogo.animation = animationLogo
@@ -86,7 +84,7 @@ class SplashActivity : AppCompatActivity() {
                     val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
                     if (BuildConfig.VERSION_CODE < versionCode) {
                         //显示更新对话框
-//                        updateDialog(updateContent, fileName)
+                        updateDialog(updateContent, fileName)
                     }else{
                         val intent = Intent(this@SplashActivity, MainActivity::class.java)
                         startActivity(intent)
@@ -94,10 +92,7 @@ class SplashActivity : AppCompatActivity() {
                     }
                 },
                 Response.ErrorListener {
-                    val handler = Handler()
-                    val msg = Message.obtain()
-                    msg.what = UPDATE_CODE_NO
-                    handler.sendMessage(msg)
+
                     Log.d("VolleyErrorListener",it.toString())
                 })
             VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
@@ -127,7 +122,7 @@ class SplashActivity : AppCompatActivity() {
                                 val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
                                 if (BuildConfig.VERSION_CODE < versionCode) {
 
-//                                    updateDialog(updateContent, fileName)
+                                    updateDialog(updateContent, fileName)
 
                                 }else{
                                     val intent = Intent(this@SplashActivity, MainActivity::class.java)
@@ -136,11 +131,7 @@ class SplashActivity : AppCompatActivity() {
                                 }
                             },
                             Response.ErrorListener {
-                                val handler = Handler()
-                                val msg = Message.obtain()
-                                msg.what =
-                                    UPDATE_CODE_NO
-                                handler.sendMessage(msg)
+
                                 Log.d("VolleyErrorListener",it.toString())
                             })
                         VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
@@ -156,14 +147,39 @@ class SplashActivity : AppCompatActivity() {
                 .setTitle("发现新版本")
                 .setMessage(updateContent)
                 .setPositiveButton("立即下载") { _, _ ->
-                    val downloadUtil = DownloadUtil(
-                        this,
+                    val downloadUtil = DownloadUtil.getInstance(
                         APK_URL,
-                        fileName
-                    )
-                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
+                        this@SplashActivity.externalCacheDir.toString() + File.separator + fileName,
+                        6,
+                        object :DownloadUtil.OnDownloadListener{
+                            override fun onDownloadFailed(e: Exception?) {
+                                val message = Message.obtain()
+                                message.what = DOWNLOAD_FAIL
+                                handler.sendMessage(message)
+
+                            }
+
+                            override fun onDownloadSuccess() {
+                                val message = Message.obtain()
+                                message.what = DOWNLOAD_SUCCESS
+                                handler.sendMessage(message)
+
+                            }
+
+                            override fun onDownloadProgress(progress: Int) {
+                                val message = Message.obtain()
+                                message.what = DOWNLOAD_PROGRESS
+                                message.arg1 = progress
+                                handler.sendMessage(message)
+                            }
+
+                        })
+
+                    downloadUtil.download()
+
+//                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+//                    startActivity(intent)
+//                    finish()
                 }
                 .setNegativeButton("以后再说") { _, _ ->
                     val intent = Intent(this@SplashActivity, MainActivity::class.java)
@@ -171,5 +187,23 @@ class SplashActivity : AppCompatActivity() {
                     finish()
                 }
         builder.show()
+    }
+
+    val handler = object :Handler(){
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            when(msg.what){
+                DOWNLOAD_FAIL -> {
+                    Toast.makeText(this@SplashActivity,"fail",Toast.LENGTH_SHORT).show()
+                }
+                DOWNLOAD_SUCCESS -> {
+                    Toast.makeText(this@SplashActivity,"ok",Toast.LENGTH_SHORT).show()
+                }
+                DOWNLOAD_PROGRESS -> {
+                    progressBarDownload.isIndeterminate = false
+                    progressBarDownload.progress = msg.arg1
+                }
+            }
+        }
     }
 }

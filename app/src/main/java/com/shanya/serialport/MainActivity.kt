@@ -1,15 +1,11 @@
 package com.shanya.serialport
 
-import android.Manifest
 import android.app.Activity
-import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
@@ -17,13 +13,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
-import com.shanya.serialport.update.DownloadUtil
-import com.shanya.serialport.update.VersionInfo
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
 import java.util.*

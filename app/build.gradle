@@ -63,4 +63,6 @@ dependencies {
 
     implementation 'com.android.volley:volley:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.6' //用于序列化
+
+    implementation 'com.github.Shanyaliux:DownloadUtil:1.0.0' //下载库
 }
