@@ -1,12 +1,17 @@
 package com.shanya.serialport.startactivity
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.provider.Settings
+import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
@@ -14,6 +19,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
@@ -26,14 +32,16 @@ import kotlinx.android.synthetic.main.activity_splash.*
 import java.io.File
 import java.lang.Exception
 import java.util.*
-import kotlin.math.log
 
 const val DOWNLOAD_SUCCESS = 0x654
 const val DOWNLOAD_FAIL = 0x655
 const val DOWNLOAD_PROGRESS = 0x656
+const val REQUEST_INSTALL_PERMISSION = 0x684
 const val JSON_URL = "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json"
 const val APK_URL = "https://github.com/Shanyaliux/SerialPort/releases/download/V1.1/app-release.apk"
 class SplashActivity : AppCompatActivity() {
+
+    private var apkName = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,14 +164,13 @@ class SplashActivity : AppCompatActivity() {
                                 val message = Message.obtain()
                                 message.what = DOWNLOAD_FAIL
                                 handler.sendMessage(message)
-
                             }
 
                             override fun onDownloadSuccess() {
                                 val message = Message.obtain()
                                 message.what = DOWNLOAD_SUCCESS
+                                message.obj = fileName
                                 handler.sendMessage(message)
-
                             }
 
                             override fun onDownloadProgress(progress: Int) {
@@ -176,10 +183,6 @@ class SplashActivity : AppCompatActivity() {
                         })
 
                     downloadUtil.download()
-
-//                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
-//                    startActivity(intent)
-//                    finish()
                 }
                 .setNegativeButton("以后再说") { _, _ ->
                     val intent = Intent(this@SplashActivity, MainActivity::class.java)
@@ -189,21 +192,78 @@ class SplashActivity : AppCompatActivity() {
         builder.show()
     }
 
+    private fun installDialog(path: String){
+        val builder: AlertDialog.Builder =
+            AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("下载完成，是否立即安装\n若之后安装，文件存于\n“$path”")
+                .setPositiveButton("立即安装"){_,_->
+                    checkInstallPermission()
+                    installApk(path)
+                }
+                .setNegativeButton("之后安装"){_,_->
+                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+        builder.show()
+    }
+
+    private fun installApk(path: String){
+        val apk = File(path)
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileProvider", apk)
+            intent.setDataAndType(uri, "application/vnd.android.package-archive")
+        }else{
+            intent.setDataAndType(Uri.fromFile(apk),"application/vnd.android.package-archive")
+        }
+        startActivity(intent)
+    }
+
+    private fun checkInstallPermission(){
+        val intent = Intent()
+        val packageUri = Uri.parse("package:" + this.packageName)
+        intent.data = packageUri
+        if (Build.VERSION.SDK_INT >= 26){
+            if (!packageManager.canRequestPackageInstalls()){
+                intent.action = Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES
+                startActivityForResult(intent, REQUEST_INSTALL_PERMISSION)
+                Toast.makeText(this,"请打开未知来源权限",Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    }
+
     val handler = object :Handler(){
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
             when(msg.what){
                 DOWNLOAD_FAIL -> {
-                    Toast.makeText(this@SplashActivity,"fail",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SplashActivity,"下载失败",Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
                 }
                 DOWNLOAD_SUCCESS -> {
-                    Toast.makeText(this@SplashActivity,"ok",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SplashActivity,"下载成功",Toast.LENGTH_SHORT).show()
+                    apkName = msg.obj as String
+                    installDialog(this@SplashActivity.externalCacheDir.toString() + File.separator + apkName)
                 }
                 DOWNLOAD_PROGRESS -> {
                     progressBarDownload.isIndeterminate = false
                     progressBarDownload.progress = msg.arg1
                 }
             }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_INSTALL_PERMISSION){
+            installDialog(this@SplashActivity.externalCacheDir.toString() + File.separator + apkName)
         }
     }
 }
