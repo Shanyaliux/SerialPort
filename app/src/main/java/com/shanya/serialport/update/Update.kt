@@ -11,8 +11,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.google.gson.Gson
 import com.shanya.serialport.BuildConfig
-import com.shanya.serialport.UPDATE_CODE_NO
-import com.shanya.serialport.UPDATE_CODE_YES
+import com.shanya.serialport.startactivity.UPDATE_CODE_NO
 
 class Update {
     companion object{
