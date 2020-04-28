@@ -37,8 +37,8 @@ const val DOWNLOAD_SUCCESS = 0x654
 const val DOWNLOAD_FAIL = 0x655
 const val DOWNLOAD_PROGRESS = 0x656
 const val REQUEST_INSTALL_PERMISSION = 0x684
-const val JSON_URL = "https://raw.githubusercontent.com/Shanyaliux/SerialPort/master/update/update.json"
-const val APK_URL = "https://github.com/Shanyaliux/SerialPort/releases/download/V1.1/app-release.apk"
+const val JSON_URL = "https://shanya-01.coding.net/p/SerialPort/d/SerialPort/git/raw/master/update.json"
+
 class SplashActivity : AppCompatActivity() {
 
     private var apkName = ""
@@ -76,34 +76,46 @@ class SplashActivity : AppCompatActivity() {
         }else{//全部权限已申请
             Toast.makeText(this,"已获取所需权限",Toast.LENGTH_SHORT).show()
 
-            val animationCheckText = AnimationUtils.loadAnimation(this,R.anim.slide_from_bottom)
-            animationCheckText.duration = 500
-            textViewCheckUpdate.animation = animationCheckText
-            textViewCheckUpdate.visibility = View.VISIBLE
-            progressBarDownload.isIndeterminate = true
-            progressBarDownload.visibility = View.VISIBLE
+            Handler().postDelayed(Runnable {
 
-            val stringRequest = StringRequest(
-                Request.Method.GET,
-                JSON_URL,
-                Response.Listener {
-                    val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
-                    val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
-                    val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
-                    if (BuildConfig.VERSION_CODE < versionCode) {
-                        //显示更新对话框
-                        updateDialog(updateContent, fileName)
-                    }else{
-                        val intent = Intent(this@SplashActivity, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    }
-                },
-                Response.ErrorListener {
+                val animationCheckText = AnimationUtils.loadAnimation(this,R.anim.slide_from_bottom)
+                animationCheckText.duration = 500
+                textViewCheckUpdate.animation = animationCheckText
+                textViewCheckUpdate.visibility = View.VISIBLE
+                progressBarDownload.isIndeterminate = true
+                progressBarDownload.visibility = View.VISIBLE
 
-                    Log.d("VolleyErrorListener",it.toString())
-                })
-            VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+                Handler().postDelayed(Runnable {
+                    val stringRequest = StringRequest(
+                        Request.Method.GET,
+                        JSON_URL,
+                        Response.Listener {
+                            val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
+                            val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
+                            val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
+                            val downloadUrl = Gson().fromJson(it,VersionInfo::class.java).downloadUrl
+                            if (BuildConfig.VERSION_CODE < versionCode) {
+                                //显示更新对话框
+                                updateDialog(updateContent, fileName,downloadUrl)
+                            }else{
+
+                                Handler().postDelayed(Runnable {
+                                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                    startActivity(intent)
+                                    finish() },1000)
+
+                            }
+                        },
+                        Response.ErrorListener {
+
+                            Log.d("VolleyErrorListener",it.toString())
+                        })
+                    VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+                },1000)
+
+            },1500)
+
+
 
         }
 
@@ -121,42 +133,58 @@ class SplashActivity : AppCompatActivity() {
                     if (element != PackageManager.PERMISSION_GRANTED){
                         Toast.makeText(this,"有权限未获取，可能会影响使用", Toast.LENGTH_SHORT).show()
                     }else{
-                        val stringRequest = StringRequest(
-                            Request.Method.GET,
-                            JSON_URL,
-                            Response.Listener {
-                                val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
-                                val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
-                                val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
-                                if (BuildConfig.VERSION_CODE < versionCode) {
 
-                                    updateDialog(updateContent, fileName)
+                        val animationCheckText = AnimationUtils.loadAnimation(this,R.anim.slide_from_bottom)
+                        animationCheckText.duration = 500
+                        textViewCheckUpdate.animation = animationCheckText
+                        textViewCheckUpdate.visibility = View.VISIBLE
+                        progressBarDownload.isIndeterminate = true
+                        progressBarDownload.visibility = View.VISIBLE
 
-                                }else{
-                                    val intent = Intent(this@SplashActivity, MainActivity::class.java)
-                                    startActivity(intent)
-                                    finish()
-                                }
-                            },
-                            Response.ErrorListener {
+                        Handler().postDelayed(Runnable {
+                            val stringRequest = StringRequest(
+                                Request.Method.GET,
+                                JSON_URL,
+                                Response.Listener {
+                                    val versionCode = Gson().fromJson(it,VersionInfo::class.java).versionCode
+                                    val updateContent = Gson().fromJson(it,VersionInfo::class.java).updateContent
+                                    val fileName = Gson().fromJson(it,VersionInfo::class.java).fileName
+                                    val downloadUrl = Gson().fromJson(it,VersionInfo::class.java).downloadUrl
+                                    if (BuildConfig.VERSION_CODE < versionCode) {
 
-                                Log.d("VolleyErrorListener",it.toString())
-                            })
-                        VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+                                        updateDialog(updateContent, fileName,downloadUrl)
+
+                                    }else{
+                                        Handler().postDelayed(Runnable {
+                                            val intent = Intent(this@SplashActivity, MainActivity::class.java)
+                                            startActivity(intent)
+                                            finish()
+                                        },1000)
+
+                                    }
+                                },
+                                Response.ErrorListener {
+
+                                    Log.d("VolleyErrorListener",it.toString())
+                                })
+                            VolleySingleton.getInstance(application).requestQueue.add(stringRequest)
+                        },1000)
+
+
                     }
                 }
             }
         }
     }
 
-    private fun updateDialog(updateContent: String, fileName: String) {
+    private fun updateDialog(updateContent: String, fileName: String,downloadUrl : String) {
         val builder: AlertDialog.Builder =
             AlertDialog.Builder(this)
                 .setTitle("发现新版本")
                 .setMessage(updateContent)
                 .setPositiveButton("立即下载") { _, _ ->
                     val downloadUtil = DownloadUtil.getInstance(
-                        APK_URL,
+                        downloadUrl,
                         this@SplashActivity.externalCacheDir.toString() + File.separator + fileName,
                         6,
                         object :DownloadUtil.OnDownloadListener{

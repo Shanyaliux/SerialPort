@@ -1,6 +1,7 @@
 {
-  "versionCode": 2,
-  "versionName": "1.1",
-  "fileName": "SerialPort_1.1.apk",
-  "updateContent": "更新信息放到Coding，提高更新网络速度。"
+  "versionCode": 4,
+  "versionName": "2.0",
+  "fileName": "SerialPort_2.0.apk",
+  "updateContent": "更新信息放到Coding，提高检查更新和下载更新的速度。",
+  "downloadUrl": "https://shanya-01.coding.net/p/SerialPort/d/SerialPort/git/raw/master/app-release.apk"
 }
